@@ -37,7 +37,7 @@ class ReplaceSprite(base_statement.BaseStatement, sprite_container.SpriteContain
 
         num_params = len(param_list)
         if not (1 <= num_params <= 2):
-            raise generic.ScriptError("replace-block requires 1 or 2 parameters, encountered " + str(num_params), pos)
+            raise generic.ScriptError(f"replace-block requires 1 or 2 parameters, encountered {num_params}", pos)
         self.start_id = param_list[0]
         if num_params >= 2:
             self.image_file = param_list[1].reduce()
@@ -68,12 +68,9 @@ class ReplaceSprite(base_statement.BaseStatement, sprite_container.SpriteContain
 
     def __str__(self):
         name = str(self.block_name) if self.block_name is not None else ""
-        def_file = "" if self.image_file is None else ", " + str(self.image_file)
-        ret = "replace {}({}{}) {{\n".format(name, self.start_id, def_file)
-        for sprite in self.sprite_list:
-            ret += "\t{}\n".format(sprite)
-        ret += "}\n"
-        return ret
+        def_file = f", {self.image_file}" if self.image_file else ""
+        sprites = ''.join(f"\t{sprite}\n" for sprite in self.sprite_list)
+        return f"replace {name}({self.start_id}{def_file}) {{\n{sprites}}}\n"
 
 class ReplaceNewSprite(base_statement.BaseStatement, sprite_container.SpriteContainer):
     """
@@ -97,7 +94,7 @@ class ReplaceNewSprite(base_statement.BaseStatement, sprite_container.SpriteCont
         sprite_container.SpriteContainer.__init__(self, "replacenew-block", name)
         num_params = len(param_list)
         if not (1 <= num_params <= 3):
-            raise generic.ScriptError("replacenew-block requires 1 to 3 parameters, encountered " + str(num_params), pos)
+            raise generic.ScriptError(f"replacenew-block requires 1 to 3 parameters, encountered {num_params}", pos)
 
         self.type = param_list[0]
         if not isinstance(self.type, expression.Identifier):
@@ -140,9 +137,6 @@ class ReplaceNewSprite(base_statement.BaseStatement, sprite_container.SpriteCont
             params.append(self.image_file)
             if self.offset != 0:
                 params.append(self.offset)
-        ret = "replacenew {}({}) {{\n".format(name, ", ".join(str(param) for param in params))
-        for sprite in self.sprite_list:
-            ret += "\t{}\n".format(sprite)
-        ret += "}\n"
-        return ret
+        sprites = ''.join(f"\t{sprite}\n" for sprite in self.sprite_list)
+        return f"replacenew {name}({', '.join(map(str, params))}) {{\n{sprites}}}\n"
 

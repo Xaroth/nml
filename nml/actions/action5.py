@@ -91,29 +91,22 @@ def parse_action5(replaces):
     offset = None
 
     if block_type == Action5BlockType.FIXED:
-        if num_sprites < num_required:
-            msg = "Invalid sprite count for sprite replacement type '{}', expected {:d}, got {:d}"
-            msg = msg.format(replaces.type, num_required, num_sprites)
+        if num_sprites < num_required or num_sprites > num_required:
+            msg = f"Invalid sprite count for sprite replacement type '{replaces.type}', expected {num_required:d}, got {num_sprites:d}"
             raise generic.ScriptError(msg, replaces.pos)
 
-        elif num_sprites > num_required:
-            msg = "Too many sprites specified for sprite replacement type '{}', expected {:d}, got {:d}, extra sprites may be ignored"
-            msg = msg.format(replaces.type, num_required, num_sprites)
-            generic.print_warning(msg, replaces.pos)
-
         if replaces.offset != 0:
-            msg = "replacenew parameter 'offset' must be zero for sprite replacement type '{}'".format(replaces.type)
+            msg = f"replacenew parameter 'offset' must be zero for sprite replacement type '{replaces.type}'"
             raise generic.ScriptError(msg, replaces.pos)
 
     elif block_type == Action5BlockType.ANY:
         if replaces.offset != 0:
-            msg = "replacenew parameter 'offset' must be zero for sprite replacement type '{}'".format(replaces.type)
+            msg = f"replacenew parameter 'offset' must be zero for sprite replacement type '{replaces.type}'"
             raise generic.ScriptError(msg, replaces.pos)
 
     elif block_type == Action5BlockType.OFFSET:
         if num_sprites + replaces.offset > num_required:
-            msg = "Exceeding the limit of {:d} sprites for sprite replacement type '{}', extra sprites may be ignored"
-            msg = msg.format(num_required, replaces.type)
+            msg = f"Exceeding the limit of {num_required:d} sprites for sprite replacement type '{replaces.type}', extra sprites may be ignored"
             generic.print_warning(msg, replaces.pos)
 
         if replaces.offset != 0 or num_sprites != num_required:

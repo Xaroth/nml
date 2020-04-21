@@ -94,7 +94,7 @@ def print_stats():
         if l['random_id']:
             num_used = l['total'] - len(l['ids'])
             if num_used > 0:
-                generic.print_info("{:02X}xx strings: {}/{}".format(t, num_used, l['total']))
+                generic.print_info(f"{t:02X}xx strings: {num_used}/{l['total']}")
 
 def get_global_string_actions():
     """

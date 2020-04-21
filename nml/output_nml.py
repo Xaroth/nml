@@ -15,12 +15,13 @@ with NML; if not, write to the Free Software Foundation, Inc.,
 
 from nml import output_base
 
+
 class OutputNML(output_base.TextOutputBase):
     """
     Class for outputting NML.
     """
     def __init__(self, filename):
-        output_base.TextOutputBase.__init__(self, filename)
+        super().__init__(filename)
 
     def open_file(self):
         return open(self.filename, 'w', encoding='utf-8')

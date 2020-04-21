@@ -45,7 +45,7 @@ class BinNot(Expression):
         return self.expr.collect_references()
 
     def __str__(self):
-        return "~" + str(self.expr)
+        return f"~{self.expr}"
 
 class Not(Expression):
     def __init__(self, expr, pos = None):
@@ -86,4 +86,4 @@ class Not(Expression):
         return True
 
     def __str__(self):
-        return "!" + str(self.expr)
+        return f"!{self.expr}"

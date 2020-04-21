@@ -17,6 +17,7 @@ import operator
 from .expression.base_expression import Type, ConstantNumeric, ConstantFloat
 from nml import generic
 
+
 class Operator:
     """
     Operator in an expression.
@@ -81,23 +82,27 @@ class Operator:
         @rtype:  C{str}
         """
         if self.prefix_text is not None:
-            return '{}({}, {})'.format(self.prefix_text, expr1, expr2)
+            return f'{self.prefix_text}({expr1}, {expr2})'
         else: # Infix notation.
-            return '({} {} {})'.format(expr1, self.token, expr2)
+            return f'({expr1} {self.token} {expr2})'
+
 
 def unsigned_rshift(a, b):
     if a < 0:
         a += 0x100000000
     return generic.truncate_int32(a >> b)
 
+
 def unsigned_rrotate(a, b):
     if a < 0:
         a += 0x100000000
     return generic.truncate_int32((a >> b) | (a << (32 - b)))
 
+
 def validate_func_int(expr1, expr2, pos):
     if expr1.type() != Type.INTEGER or expr2.type() != Type.INTEGER:
         raise generic.ScriptError("Binary operator requires both operands to be integers.", pos)
+
 
 def validate_func_float(expr1, expr2, pos):
     if expr1.type() not in (Type.INTEGER, Type.FLOAT) or expr2.type() not in (Type.INTEGER, Type.FLOAT):
@@ -107,16 +112,19 @@ def validate_func_float(expr1, expr2, pos):
             (expr2.type() == Type.FLOAT and not isinstance(expr1, (ConstantNumeric, ConstantFloat))):
         raise generic.ScriptError("Floating-point operations are only possible when both operands are compile-time constants.", pos)
 
+
 def validate_func_add(expr1, expr2, pos):
     if (expr1.type() == Type.STRING_LITERAL) ^ (expr2.type() == Type.STRING_LITERAL):
         raise generic.ScriptError("Concatenating a string literal and a number is not possible.", pos)
     if expr1.type() != Type.STRING_LITERAL:
         validate_func_float(expr1, expr2, pos)
 
+
 def validate_func_div_mod(expr1, expr2, pos):
     validate_func_float(expr1, expr2, pos)
     if isinstance(expr2, (ConstantNumeric, ConstantFloat)) and expr2.value == 0:
         raise generic.ScriptError("Division and modulo require the right hand side to be nonzero.", pos)
+
 
 def validate_func_rhs_positive(expr1, expr2, pos):
     validate_func_int(expr1, expr2, pos)
@@ -350,6 +358,7 @@ DIVU = Operator(
     act2_supports = True, act2_str = r'\2u/', act2_num = 8,
     actd_supports = True, actd_str = r'\Du/', actd_num = 9,
 )
+
 
 class GRMOperator:
     def __init__(self, op_str, op_num):

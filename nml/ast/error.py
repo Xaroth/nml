@@ -43,7 +43,7 @@ class Error(base_statement.BaseStatement):
     def __init__(self, param_list, pos):
         base_statement.BaseStatement.__init__(self, "error()", pos)
         if not 2 <= len(param_list) <= 5:
-            raise generic.ScriptError("'error' expects between 2 and 5 parameters, got " + str(len(param_list)), self.pos)
+            raise generic.ScriptError(f"'error' expects between 2 and 5 parameters, got {len(param_list)}", self.pos)
         self.severity = param_list[0]
         self.msg      = param_list[1]
         self.data     = param_list[2] if len(param_list) >= 3 else None
@@ -78,18 +78,17 @@ class Error(base_statement.BaseStatement):
         return actionB.parse_error_block(self)
 
     def __str__(self):
-        sev = str(self.severity)
+        sev = self.severity
         if isinstance(self.severity, expression.ConstantNumeric):
             for s in actionB.error_severity:
                 if self.severity.value == actionB.error_severity[s]:
                     sev = s
                     break
-        res = 'error({}, {}'.format(sev, self.msg)
-        if self.data is not None:
-            res += ', {}'.format(self.data)
-        if len(self.params) > 0:
-            res += ', {}'.format(self.params[0])
-        if len(self.params) > 1:
-            res += ', {}'.format(self.params[1])
-        res += ');\n'
-        return res
+        params = [x for x in [
+            str(sev),
+            self.msg,
+            self.data,
+            self.params[0] if len(self.params) > 0 else None,
+            self.params[1] if len(self.params) > 1 else None,
+        ] if x is not None]
+        return f"error({', '.join(map(str, params))});\n"

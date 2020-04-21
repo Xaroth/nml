@@ -16,11 +16,12 @@ with NML; if not, write to the Free Software Foundation, Inc.,
 import hashlib, os
 from nml import generic, output_base, grfstrings, spriteencoder
 
+
 class OutputGRF(output_base.BinaryOutputBase):
     def __init__(self, filename):
-        output_base.BinaryOutputBase.__init__(self, filename)
+        super().__init__(filename)
         self.encoder = None
-        self.sprite_output = output_base.BinaryOutputBase(filename + ".sprite.tmp")
+        self.sprite_output = output_base.BinaryOutputBase(f"{filename}.sprite.tmp")
         self.md5 = hashlib.md5()
         # sprite_num is deliberately off-by-one because it is used as an
         # id between data and sprite section. For the sprite section an id
@@ -70,11 +71,11 @@ class OutputGRF(output_base.BinaryOutputBase):
         real_file.write(self.sprite_output.file)
 
     def open(self):
-        output_base.BinaryOutputBase.open(self)
+        super().open()
         self.sprite_output.open()
 
     def close(self):
-        output_base.BinaryOutputBase.close(self)
+        super().close()
         self.sprite_output.discard()
 
     def _print_utf8(self, char, stream):
@@ -112,14 +113,14 @@ class OutputGRF(output_base.BinaryOutputBase):
 
     def start_sprite(self, size, type = 0xFF):
         if type == 0xFF:
-            output_base.BinaryOutputBase.start_sprite(self, size + 5)
+            super().start_sprite(size + 5)
             self.print_dword(size)
             self.print_byte(type)
         elif type == 0xFD:
             # Real sprite, this means no data is written to the data section
             # This call is still needed to open 'output mode'
             assert size == 0
-            output_base.BinaryOutputBase.start_sprite(self, 9)
+            super().start_sprite(9)
             self.print_dword(4)
             self.print_byte(0xfd)
             self.print_dword(self.sprite_num)
@@ -184,18 +185,17 @@ class OutputGRF(output_base.BinaryOutputBase):
         self.sprite_output.print_byte(0xff)
         self.sprite_output.print_byte(len(name))
         self.print_string(name, force_ascii = True, final_zero = True, stream = self.sprite_output)  # ASCII filenames seems sufficient.
-        fp = open(generic.find_file(filename), 'rb')
-        while True:
-            data = fp.read(1024)
-            if len(data) == 0: break
-            for d in data:
-                self.sprite_output.print_byte(d)
-        fp.close()
 
-        self.sprite_output.end_sprite();
+        with open(generic.find_file(filename), "rb") as fp:
+            while True:
+                data = fp.read(1024)
+                if len(data) == 0: break
+                for d in data:
+                    self.sprite_output.print_byte(d)
+
+        self.sprite_output.end_sprite()
         self.end_sprite()
 
     def end_sprite(self):
-        output_base.BinaryOutputBase.end_sprite(self)
+        super().end_sprite()
         self.sprite_num += 1
-

@@ -107,7 +107,7 @@ def create_intermediate_varaction2(feature, varact2parser, mapping, default, pos
     for mod in varact2parser.mods:
         act6.modify_bytes(mod.param, mod.size, mod.offset + 4)
 
-    name = expression.Identifier("@action3_{:d}".format(action2_id))
+    name = expression.Identifier(f"@action3_{action2_id:d}")
     action2_id += 1
     varaction2 = action2var.Action2Var(feature, name.value, pos, 0x89)
     varaction2.var_list = varact2parser.var_list
@@ -266,7 +266,7 @@ def parse_graphics_block_single_id(graphics_block, feature, id, is_livery_overri
             cb_table = action3_callbacks.callbacks[feature]
             if cb_name in cb_table:
                 if cb_name in seen_callbacks:
-                    raise generic.ScriptError("Callback '{}' is defined multiple times.".format(cb_name), cargo_id.pos)
+                    raise generic.ScriptError(f"Callback '{cb_name}' is defined multiple times.", cargo_id.pos)
                 seen_callbacks.add(cb_name)
 
                 info_list = cb_table[cb_name]
@@ -282,7 +282,7 @@ def parse_graphics_block_single_id(graphics_block, feature, id, is_livery_overri
                     if info['type'] == 'cargo':
                         # Not a callback, but an alias for a certain cargo type
                         if info['num'] in cargo_gfx:
-                            raise generic.ScriptError("Graphics for '{}' are defined multiple times.".format(cb_name), cargo_id.pos)
+                            raise generic.ScriptError(f"Graphics for '{cb_name}' are defined multiple times.", cargo_id.pos)
                         cargo_gfx[info['num']] = graphics.result.value
                     elif info['type'] == 'cb':
                         callbacks.append( (info, graphics.result.value) )
@@ -298,12 +298,12 @@ def parse_graphics_block_single_id(graphics_block, feature, id, is_livery_overri
         # Raise the error only now, to let the 'unknown identifier' take precedence
         if feature >= 5: raise generic.ScriptError("Associating graphics with a specific cargo is possible only for vehicles and stations.", cargo_id.pos)
         if cargo_id.value in cargo_gfx:
-            raise generic.ScriptError("Graphics for cargo {:d} are defined multiple times.".format(cargo_id.value), cargo_id.pos)
+            raise generic.ScriptError(f"Graphics for cargo {cargo_id.value:d} are defined multiple times.", cargo_id.pos)
         cargo_gfx[cargo_id.value] = graphics.result.value
 
     if graphics_block.default_graphics is not None:
         if 'default' not in action3_callbacks.callbacks[feature]:
-            raise generic.ScriptError("Default graphics may not be defined for this feature (0x{:02X}).".format(feature), graphics_block.default_graphics.pos)
+            raise generic.ScriptError(f"Default graphics may not be defined for this feature (0x{feature:02X}).", graphics_block.default_graphics.pos)
         if None in cargo_gfx:
             raise generic.ScriptError("Default graphics are defined twice.", graphics_block.default_graphics.pos)
         cargo_gfx[None] = graphics_block.default_graphics.value

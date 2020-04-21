@@ -17,6 +17,8 @@ with NML; if not, write to the Free Software Foundation, Inc.,
 Abstract base classes that implements common functionality for output classes
 """
 import array, io
+from nml.util import StringIO
+
 
 class OutputBase:
     """
@@ -54,7 +56,6 @@ class OutputBase:
         @rtype: C{file}
         """
         raise NotImplementedError("Implement me in {}".format(type(self)))
-
 
     def assemble_file(self, real_file):
         """
@@ -283,10 +284,10 @@ class TextOutputBase(OutputBase):
     Base class for textual output.
     """
     def __init__(self, filename):
-        OutputBase.__init__(self, filename)
+        super().__init__(filename)
 
     def open(self):
-        self.file = io.StringIO()
+        self.file = StringIO()
 
 
 class BinaryOutputBase(SpriteOutputBase):
@@ -294,7 +295,7 @@ class BinaryOutputBase(SpriteOutputBase):
     Class for binary output.
     """
     def __init__(self, filename):
-        SpriteOutputBase.__init__(self, filename)
+        super().__init__(filename)
 
     def open(self):
         self.file = array.array('B')

@@ -29,13 +29,13 @@ class Switch(switch_base_class):
     def __init__(self, param_list, body, pos):
         base_statement.BaseStatement.__init__(self, "switch-block", pos, False, False)
         if len(param_list) != 4:
-            raise generic.ScriptError("Switch-block requires 4 parameters, encountered " + str(len(param_list)), pos)
+            raise generic.ScriptError(f"Switch-block requires 4 parameters, encountered {len(param_list)}", pos)
         if not isinstance(param_list[1], expression.Identifier):
             raise generic.ScriptError("Switch-block parameter 2 'variable range' must be an identifier.", param_list[1].pos)
         if param_list[1].value in var_ranges:
             self.var_range = var_ranges[param_list[1].value]
         else:
-            raise generic.ScriptError("Unrecognized value for switch parameter 2 'variable range': '{}'".format(param_list[1].value), param_list[1].pos)
+            raise generic.ScriptError(f"Unrecognized value for switch parameter 2 'variable range': '{param_list[1].value}'", param_list[1].pos)
         if not isinstance(param_list[2], expression.Identifier):
             raise generic.ScriptError("Switch-block parameter 3 'name' must be an identifier.", param_list[2].pos)
         self.initialize(param_list[2], general.parse_feature(param_list[0]).value)
@@ -56,7 +56,7 @@ class Switch(switch_base_class):
         return all_refs
 
     def debug_print(self, indentation):
-        generic.print_dbg(indentation, 'Switch, Feature = {:d}, name = {}'.format(next(iter(self.feature_set)), self.name.value))
+        generic.print_dbg(indentation, f'Switch, Feature = {next(iter(self.feature_set)):d}, name = {self.name.value}')
 
         generic.print_dbg(indentation + 2, 'Expression:')
         self.expr.debug_print(indentation + 4)
@@ -71,7 +71,7 @@ class Switch(switch_base_class):
 
     def __str__(self):
         var_range = 'SELF' if self.var_range == 0x89 else 'PARENT'
-        return 'switch({}, {}, {}, {}) {{\n{}}}\n'.format(str(next(iter(self.feature_set))), var_range, str(self.name), str(self.expr), str(self.body))
+        return f'switch({next(iter(self.feature_set))}, {var_range}, {self.name}, {self.expr}) {{\n{self.body}}}\n'
 
 
 class SwitchBody:
@@ -248,7 +248,7 @@ class RandomSwitch(switch_base_class):
 
         self.triggers = self.triggers.reduce_constant(global_constants.const_list)
         if not (0 <= self.triggers.value <= 255):
-            raise generic.ScriptError("random_switch parameter 4 'triggers' out of range 0..255, encountered " + str(self.triggers.value), self.triggers.pos)
+            raise generic.ScriptError(f"random_switch parameter 4 'triggers' out of range 0..255, encountered {self.triggers.value}", self.triggers.pos)
 
         switch_base_class.pre_process(self)
 

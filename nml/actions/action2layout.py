@@ -28,9 +28,9 @@ class Action2Layout(action2.Action2):
     def resolve_tmp_storage(self):
         for reg in self.param_registers:
             if not self.tmp_locations:
-                raise generic.ScriptError("There are not enough registers available " +
-                        "to perform all required computations in switch blocks. " +
-                        "Please reduce the complexity of your code.", self.pos)
+                raise generic.ScriptError("There are not enough registers available "
+                                          "to perform all required computations in switch blocks. "
+                                          "Please reduce the complexity of your code.", self.pos)
             location = self.tmp_locations[0]
             self.remove_tmp_location(location, False)
             reg.set_register(location)
@@ -249,9 +249,9 @@ class Action2LayoutSprite:
         name = name.value
 
         if not name in self.params:
-            raise generic.ScriptError("Unknown sprite parameter '{}'".format(name), value.pos)
+            raise generic.ScriptError(f"Unknown sprite parameter '{name}'", value.pos)
         if self.is_set(name):
-            raise generic.ScriptError("Sprite parameter '{}' can be set only once per sprite.".format(name), value.pos)
+            raise generic.ScriptError(f"Sprite parameter '{name}' can be set only once per sprite.", value.pos)
 
         self.params[name]['value'] = self.params[name]['validator'](name, value)
         self.params[name]['is_set'] = True
@@ -276,7 +276,7 @@ class Action2LayoutSprite:
             if isinstance(offset, expression.ConstantNumeric):
                 generic.check_range(offset.value, 0, len(real_sprite.parse_sprite_data(spriteset)) - 1, "offset within spriteset", sg_ref.pos)
         else:
-            raise generic.ScriptError("Expected 0 or 1 parameter, got " + str(len(sg_ref.param_list)), sg_ref.pos)
+            raise generic.ScriptError(f"Expected 0 or 1 parameter, got {len(sg_ref.param_list)}", sg_ref.pos)
 
         num = action1.get_action1_index(spriteset)
         generic.check_range(num, 0, (1 << 14) - 1, "sprite", sg_ref.pos)
@@ -347,7 +347,7 @@ class Action2LayoutSprite:
             else:
                 assert name in ('xextent', 'yextent', 'zextent')
                 if not isinstance(value, expression.ConstantNumeric):
-                    raise generic.ScriptError("Value of '{}' must be a compile-time constant number.".format(name), value.pos)
+                    raise generic.ScriptError(f"Value of '{name}' must be a compile-time constant number.", value.pos)
                 generic.check_range(value.value, 0, 255, name, value.pos)
                 return value
         # Value must be written to a register
@@ -379,7 +379,7 @@ def get_layout_action2s(spritelayout, feature, spr_pos):
     actions = []
 
     if feature not in action2.features_sprite_layout:
-        raise generic.ScriptError("Sprite layouts are not supported for feature '{}'.".format(general.feature_name(feature)))
+        raise generic.ScriptError(f"Sprite layouts are not supported for feature '{general.feature_name(feature)}'.")
 
     # Allocate registers
     param_map = {}
@@ -410,7 +410,7 @@ def get_layout_action2s(spritelayout, feature, spr_pos):
     temp_registers = []
     for type, pos, param_list in layout_sprite_list:
         if type.value not in layout_sprite_types:
-            raise generic.ScriptError("Invalid sprite type '{}' encountered. Expected 'ground', 'building', or 'childsprite'.".format(type.value), type.pos)
+            raise generic.ScriptError(f"Invalid sprite type '{type.value}' encountered. Expected 'ground', 'building', or 'childsprite'.", type.pos)
         sprite = Action2LayoutSprite(feature, layout_sprite_types[type.value], pos, [param_map])
         for name, value in param_list:
             sprite.set_param(name, value)
@@ -447,7 +447,7 @@ def get_layout_action2s(spritelayout, feature, spr_pos):
     if len(act6.modifications) > 0:
         actions.append(act6)
 
-    layout_action = Action2Layout(feature, spritelayout.name.value + " - feature {:02X}".format(feature), spritelayout.pos, ground_sprite, building_sprites, param_registers)
+    layout_action = Action2Layout(feature, f"{spritelayout.name.value} - feature {feature:02X}", spritelayout.pos, ground_sprite, building_sprites, param_registers)
     actions.append(layout_action)
 
     if temp_registers:
@@ -473,7 +473,7 @@ def get_layout_action2s(spritelayout, feature, spr_pos):
             extra_act6.modify_bytes(mod.param, mod.size, mod.offset + 4)
         if len(extra_act6.modifications) > 0: actions.append(extra_act6)
 
-        varaction2 = action2var.Action2Var(feature, "{}@registers - feature {:02X}".format(spritelayout.name.value, feature), spritelayout.pos, 0x89)
+        varaction2 = action2var.Action2Var(feature, f"{spritelayout.name.value}@registers - feature {feature:02X}", spritelayout.pos, 0x89)
         varaction2.var_list = varact2parser.var_list
         ref = expression.SpriteGroupRef(spritelayout.name, [], None, layout_action)
         varaction2.ranges.append(action2var.VarAction2Range(expression.ConstantNumeric(0), expression.ConstantNumeric(0), ref, ''))
@@ -508,5 +508,5 @@ def make_empty_layout_action2(feature, pos):
     """
     ground_sprite = Action2LayoutSprite(feature, Action2LayoutSpriteType.GROUND)
     ground_sprite.set_param(expression.Identifier('sprite'), expression.ConstantNumeric(0))
-    return Action2Layout(feature, "@CB_FAILED_LAYOUT{:02X}".format(feature), pos, ground_sprite, [], [])
+    return Action2Layout(feature, f"@CB_FAILED_LAYOUT{feature:02X}", pos, ground_sprite, [], [])
 

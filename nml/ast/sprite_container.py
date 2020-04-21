@@ -46,9 +46,8 @@ class SpriteContainer:
         assert bit_depth in (8, 32)
         key = (zoom_level, bit_depth)
         if key in self.sprite_data:
-            msg = ("Sprites are already defined for {} '{}' for this zoom " +
-                   "level / bit depth combination. This data will be overridden.")
-            msg = msg.format(self.block_type, self.block_name.value)
+            msg = (f"Sprites are already defined for {self.block_type} '{self.block_name.value}' for this zoom "
+                    "level / bit depth combination. This data will be overridden.")
             generic.print_warning(msg, pos)
         self.sprite_data[key] = (sprite_list, default_file, default_mask_file, pos)
 

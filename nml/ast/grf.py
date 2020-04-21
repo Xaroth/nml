@@ -95,7 +95,7 @@ class GRF(base_statement.BaseStatement):
             elif assignment.name.value == "grfid": self.grfid = assignment.value
             elif assignment.name.value == "version": self.version = assignment.value
             elif assignment.name.value == "min_compatible_version": self.min_compatible_version = assignment.value
-            else: raise generic.ScriptError("Unknown item in GRF-block: " + str(assignment.name), assignment.name.pos)
+            else: raise generic.ScriptError(f"Unknown item in GRF-block: {assignment.name}", assignment.name.pos)
 
     def register_names(self):
         generic.OnlyOnce.enforce(self, "GRF-block")
@@ -277,7 +277,7 @@ class ParameterSetting:
             if self.type == 'bool' and self.def_val.value != 0 and self.def_val.value != 1:
                 raise generic.ScriptError("setting-def_value must be either 0 or 1 for 'bool' settings", value.pos)
         else:
-            raise generic.ScriptError("Unknown setting-property " + name, value.pos)
+            raise generic.ScriptError(f"Unknown setting-property {name}", value.pos)
 
 class ParameterDescription:
     def __init__(self, setting_list, num = None, pos = None):
@@ -286,14 +286,8 @@ class ParameterDescription:
         self.pos = pos
 
     def __str__(self):
-        ret = "\tparam"
-        if self.num:
-            ret += " " + str(self.num)
-        ret += " {\n"
-        for setting in self.setting_list:
-            ret += str(setting)
-        ret += "\t}\n"
-        return ret
+        num = f" {self.num}" if self.num else ""
+        return f"\tparam{num} {{\n{''.join(map(str, self.setting_list))}\t}}\n"
 
     def debug_print(self, indentation):
         if self.num is not None:

@@ -117,6 +117,7 @@ def convert_palette(pal):
         ret[palmap_d2w[idx]] = palmap_d2w[colour]
     return ret
 
+
 class RealSprite:
     """
     @ivar param_list: Original parameters from NML source file.
@@ -211,13 +212,8 @@ class RealSprite:
             self.mask_pos = (self.xpos, self.ypos)
 
     def __str__(self):
-        ret = ""
-        if self.label is not None:
-            ret += str(self.label) + ": "
-        ret += "["
-        ret += ", ".join([str(param) for param in self.param_list])
-        ret += "]"
-        return ret
+        prefix = f"{self.label}: " if self.label else ""
+        return f"{prefix}[{', '.join(map(str, self.param_list))}]"
 
     def get_cache_key(self, crop_sprites):
         """
@@ -252,6 +248,7 @@ class RealSprite:
         do_crop = crop_sprites and ((self.flags.value & FLAG_NOCROP) == 0)
         return (rgb_file, rgb_rect, mask_file, mask_rect, do_crop)
 
+
 class SpriteAction(base_action.BaseAction):
     """
     @ivar sprite_num: Number of the sprite, or C{None} if not decided yet.
@@ -266,9 +263,10 @@ class SpriteAction(base_action.BaseAction):
 
     def prepare_output(self, sprite_num):
         if self.sprite_num is not None and self.sprite_num.value != sprite_num:
-            msg = "Sprite number {:d} given in base_graphics-block, but it doesn't match output sprite number {:d}"
-            msg = msg.format(self.sprite_num.value, sprite_num)
+            msg = (f"Sprite number {self.sprite_num.value:d} given in base_graphics-block, "
+                   f"but it doesn't match output sprite number {sprite_num:d}")
             raise generic.ScriptError(msg)
+
 
 class RealSpriteAction(SpriteAction):
     def __init__(self):
@@ -285,6 +283,7 @@ class RealSpriteAction(SpriteAction):
             file.print_sprite([s for s in self.sprite_list if not s.is_empty])
         if self.last: file.newline()
 
+
 class RecolourSprite:
     def __init__(self, mapping, label = None, poslist = None):
         self.mapping = mapping
@@ -297,7 +296,7 @@ class RecolourSprite:
     def debug_print(self, indentation):
         generic.print_dbg(indentation, 'Recolour sprite, mapping:')
         for assignment in self.mapping:
-            generic.print_dbg(indentation + 2, '{}: {};'.format(assignment.name, assignment.value))
+            generic.print_dbg(indentation + 2, f'{assignment.name}: {assignment.value};')
 
     def get_labels(self):
         labels = {}
@@ -317,12 +316,13 @@ class RecolourSprite:
         return [RecolourSprite(new_mapping, poslist = poslist)]
 
     def __str__(self):
-        ret = "" if self.label is None else str(self.label) + ": "
-        ret += "recolour_sprite {\n"
-        for assignment in self.mapping:
-            ret += '{}: {};'.format(assignment.name, assignment.value)
-        ret += "}"
-        return ret
+        prefix = f"{self.label}: " if self.label else ""
+        assignments = ''.join(
+            f"{assignment.name}: {assignment.value};"
+            for assignment in self.mapping
+        )
+        return f"{prefix}recolour_sprite {{\n{assignments}}}"
+
 
 class RecolourSpriteAction(SpriteAction):
     def __init__(self, sprite):
@@ -353,7 +353,8 @@ class RecolourSpriteAction(SpriteAction):
         file.start_sprite(257)
         file.print_bytex(0)
         if file.palette not in ("DEFAULT", "LEGACY"):
-            raise generic.ScriptError("Recolour sprites are only supported when writing to the DEFAULT (DOS) or LEGACY (WIN) palette. If you don't have any real sprites use the commandline option -p to set a palette.")
+            raise generic.ScriptError("Recolour sprites are only supported when writing to the DEFAULT (DOS) or LEGACY (WIN) palette. "
+                                      "If you don't have any real sprites use the commandline option -p to set a palette.")
         colour_table = self.output_table if file.palette == "DEFAULT" else convert_palette(self.output_table)
         for idx, colour in enumerate(colour_table):
             if idx % 16 == 0:
@@ -361,6 +362,7 @@ class RecolourSpriteAction(SpriteAction):
             file.print_bytex(colour)
         if self.last: file.newline()
         file.end_sprite()
+
 
 class TemplateUsage:
     def __init__(self, name, param_list, label, pos):
@@ -378,21 +380,21 @@ class TemplateUsage:
     def get_labels(self):
         # Load labels from the template definition
         if self.name.value not in sprite_template_map:
-            raise generic.ScriptError("Encountered unknown template identifier: " + self.name.value, self.name.pos)
+            raise generic.ScriptError(f"Encountered unknown template identifier: {self.name.value}", self.name.pos)
         labels, offset = sprite_template_map[self.name.value].get_labels()
         # Add (possibly) label applied to ourselves
         if self.label is not None:
             if self.label.value in labels:
-                raise generic.ScriptError("Duplicate label encountered; '{}' already exists.".format(self.label.value), self.pos)
+                raise generic.ScriptError(f"Duplicate label encountered; '{self.label.value}' already exists.", self.pos)
             labels[self.label.value] = 0
         return labels, offset
 
     def expand(self, default_file, default_mask_file, poslist, parameters):
         if self.name.value not in sprite_template_map:
-            raise generic.ScriptError("Encountered unknown template identifier: " + self.name.value, self.name.pos)
+            raise generic.ScriptError(f"Encountered unknown template identifier: {self.name.value}", self.name.pos)
         template = sprite_template_map[self.name.value]
         if len(self.param_list) != len(template.param_list):
-            raise generic.ScriptError("Incorrect number of template arguments. Expected " + str(len(template.param_list)) + ", got " + str(len(self.param_list)), self.pos)
+            raise generic.ScriptError(f"Incorrect number of template arguments. Expected {len(template.param_list)}, got {len(self.param_list)}" , self.pos)
         param_dict = {}
         for i, param in enumerate(self.param_list):
             param = param.reduce([real_sprite_flags, parameters])
@@ -403,7 +405,7 @@ class TemplateUsage:
         return parse_sprite_list(template.sprite_list, default_file, default_mask_file, poslist + [self.pos], param_dict)
 
     def __str__(self):
-        return "{}({})".format(self.name, ", ".join(str(param) for param in self.param_list))
+        return f"{self.name}({', '.join(map(str, self.param_list))})"
 
 
 def parse_real_sprite(sprite, default_file, default_mask_file, poslist, id_dict):
@@ -432,8 +434,8 @@ def parse_real_sprite(sprite, default_file, default_mask_file, poslist, id_dict)
 
     new_sprite.xrel = sprite.param_list[param_offset].reduce_constant([id_dict])
     new_sprite.yrel = sprite.param_list[param_offset + 1].reduce_constant([id_dict])
-    generic.check_range(new_sprite.xrel.value, -0x8000, 0x7fff,  "Real sprite paramater {:d} 'xrel'".format(param_offset + 1), new_sprite.xrel.pos)
-    generic.check_range(new_sprite.yrel.value, -0x8000, 0x7fff,  "Real sprite paramater {:d} 'yrel'".format(param_offset + 2), new_sprite.yrel.pos)
+    generic.check_range(new_sprite.xrel.value, -0x8000, 0x7fff,  f"Real sprite paramater {(param_offset + 1):d} 'xrel'", new_sprite.xrel.pos)
+    generic.check_range(new_sprite.yrel.value, -0x8000, 0x7fff,  f"Real sprite paramater {(param_offset + 2):d} 'yrel'", new_sprite.yrel.pos)
     param_offset += 2
 
     # Next may follow any combination of (flags, filename, mask), but always in that order
@@ -450,7 +452,7 @@ def parse_real_sprite(sprite, default_file, default_mask_file, poslist, id_dict)
         new_sprite.file = sprite.param_list[param_offset].reduce([id_dict])
         param_offset += 1
         if not isinstance(new_sprite.file, expression.StringLiteral):
-            raise generic.ScriptError("Real sprite parameter {:d} 'file' should be a string literal".format(param_offset + 1), new_sprite.file.pos)
+            raise generic.ScriptError(f"Real sprite parameter {(param_offset + 1):d} 'file' should be a string literal", new_sprite.file.pos)
 
     if new_sprite.file is None:
         raise generic.ScriptError("No image file specified for real sprite", sprite.param_list[0].pos)
@@ -463,7 +465,7 @@ def parse_real_sprite(sprite, default_file, default_mask_file, poslist, id_dict)
         # Mask may be either string (file only) or array (empty => no mask, 1 value => file only, 2 => offsets only, 3 => file + offsets)
         if isinstance(mask, expression.Array):
             if not (0 <= len(mask.values) <= 3):
-                raise generic.ScriptError("Real sprite mask should be an array with 0 to 3 values, encountered {:d}".format(len(mask.values)), mask.pos)
+                raise generic.ScriptError(f"Real sprite mask should be an array with 0 to 3 values, encountered {len(mask.values):d}", mask.pos)
             if len(mask.values) == 0:
                 # disable any default mask
                 new_sprite.mask_file = None
@@ -480,10 +482,10 @@ def parse_real_sprite(sprite, default_file, default_mask_file, poslist, id_dict)
         else:
             new_sprite.mask_file = mask.reduce([id_dict])
             if not isinstance(new_sprite.mask_file, expression.StringLiteral):
-                raise generic.ScriptError("Real sprite parameter {:d} 'mask' should be an array or string literal".format(param_offset + 1), new_sprite.file.pos)
+                raise generic.ScriptError(f"Real sprite parameter {(param_offset + 1):d} 'mask' should be an array or string literal", new_sprite.file.pos)
 
     if num_param > param_offset:
-        raise generic.ScriptError("Real sprite has too many parameters, the last {:d} parameter(s) cannot be parsed.".format(num_param - param_offset), sprite.param_list[param_offset].pos)
+        raise generic.ScriptError(f"Real sprite has too many parameters, the last {(num_param - param_offset):d} parameter(s) cannot be parsed.", sprite.param_list[param_offset].pos)
 
     return new_sprite
 
@@ -511,8 +513,8 @@ def parse_sprite_data(sprite_container):
         sprite_list, default_file, default_mask_file, pos, zoom_level, bit_depth = sprite_data
         new_sprite_list = parse_sprite_list(sprite_list, default_file, default_mask_file, [pos])
         if not first and len(new_sprite_list) != len(action_list):
-            msg = "Expected {:d} alternative sprites for {} '{}', got {:d}."
-            msg = msg.format(len(action_list), sprite_container.block_type, sprite_container.block_name.value, len(new_sprite_list))
+            msg = (f"Expected {len(action_list):d} alternative sprites for {sprite_container.block_type} "
+                   f"'{sprite_container.block_name.value}', got {len(new_sprite_list):d}.")
             raise generic.ScriptError(msg, sprite_container.pos)
 
         for i, sprite in enumerate(new_sprite_list):

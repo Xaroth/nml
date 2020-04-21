@@ -30,14 +30,14 @@ class TemplateDeclaration(base_statement.BaseStatement):
         for sprite in self.sprite_list:
             if isinstance(sprite, real_sprite.TemplateUsage):
                 if sprite.name.value == self.name.value:
-                    raise generic.ScriptError("Sprite template '{}' includes itself.".format(sprite.name.value), self.pos)
+                    raise generic.ScriptError(f"Sprite template '{sprite.name.value}' includes itself.", self.pos)
                 elif sprite.name.value not in real_sprite.sprite_template_map:
-                    raise generic.ScriptError("Encountered unknown template identifier: " + sprite.name.value, sprite.pos)
+                    raise generic.ScriptError(f"Encountered unknown template identifier: {sprite.name.value}", sprite.pos)
         #Register template
         if self.name.value not in real_sprite.sprite_template_map:
             real_sprite.sprite_template_map[self.name.value] = self
         else:
-            raise generic.ScriptError("Template named '{}' is already defined, first definition at {}".format(self.name.value, real_sprite.sprite_template_map[self.name.value].pos), self.pos)
+            raise generic.ScriptError(f"Template named '{self.name.value}' is already defined, first definition at {real_sprite.sprite_template_map[self.name.value].pos}", self.pos)
 
     def get_labels(self):
         labels = {}
@@ -46,7 +46,7 @@ class TemplateDeclaration(base_statement.BaseStatement):
             sprite_labels, num_sprites = sprite.get_labels()
             for lbl, lbl_offset in sprite_labels.items():
                 if lbl in labels:
-                    raise generic.ScriptError("Duplicate label encountered; '{}' already exists.".format(lbl), self.pos)
+                    raise generic.ScriptError(f"Duplicate label encountered; '{lbl}' already exists.", self.pos)
                 labels[lbl] = lbl_offset + offset
             offset += num_sprites
         return labels, offset
@@ -64,11 +64,8 @@ class TemplateDeclaration(base_statement.BaseStatement):
         return []
 
     def __str__(self):
-        ret = "template {}({}) {{\n".format(str(self.name), ", ".join([str(param) for param in self.param_list]))
-        for sprite in self.sprite_list:
-            ret += "\t{}\n".format(sprite)
-        ret += "}\n"
-        return ret
+        sprites = ''.join(f"\t{sprite}\n" for sprite in self.sprite_list)
+        return f"template {self.name}({', '.join(map(str, self.param_list))}) {{\n{sprites}}}\n"
 
 spriteset_base_class = action2.make_sprite_group_class(True, True, False, cls_is_relocatable = True)
 
@@ -76,7 +73,7 @@ class SpriteSet(spriteset_base_class, sprite_container.SpriteContainer):
     def __init__(self, param_list, sprite_list, pos):
         base_statement.BaseStatement.__init__(self, "spriteset", pos, False, False)
         if not (1 <= len(param_list) <= 2):
-            raise generic.ScriptError("Spriteset requires 1 or 2 parameters, encountered " + str(len(param_list)), pos)
+            raise generic.ScriptError(f"Spriteset requires 1 or 2 parameters, encountered {len(param_list)}", pos)
         name = param_list[0]
         if not isinstance(name, expression.Identifier):
             raise generic.ScriptError("Spriteset parameter 1 'name' should be an identifier", name.pos)
@@ -121,12 +118,9 @@ class SpriteSet(spriteset_base_class, sprite_container.SpriteContainer):
         return []
 
     def __str__(self):
-        filename = (", " + str(self.image_file)) if self.image_file is not None else ""
-        ret = "spriteset({}{}) {{\n".format(self.name, filename)
-        for sprite in self.sprite_list:
-            ret += "\t{}\n".format(str(sprite))
-        ret += "}\n"
-        return ret
+        filename = f", {self.image_file}" if self.image_file is not None else ""
+        sprites = ''.join(f"\t{sprite}\n" for sprite in self.sprite_list)
+        return f"spriteset({self.name}{filename}) {{\n{sprites}}}\n"
 
 spritegroup_base_class = action2.make_sprite_group_class(False, True, False)
 

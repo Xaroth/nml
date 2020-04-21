@@ -155,7 +155,7 @@ class LinePosition(Position):
         self.line_start = line_start
 
     def __str__(self):
-        return '"{}", line {:d}'.format(self.filename, self.line_start)
+        return f'"{self.filename}", line {self.line_start:d}'
 
 class PixelPosition(Position):
     """
@@ -173,7 +173,7 @@ class PixelPosition(Position):
         self.ypos = ypos
 
     def __str__(self):
-        return '"{}" at [x: {:d}, y: {:d}]'.format(self.filename, self.xpos, self.ypos)
+        return f'"{self.filename}" at [x: {self.xpos:d}, y: {self.ypos:d}]'
 
 class ImageFilePosition(Position):
     """
@@ -182,20 +182,20 @@ class ImageFilePosition(Position):
     def __init__(self, filename, pos = None):
         poslist = []
         if pos is not None: poslist.append(pos)
-        Position.__init__(self, filename, poslist)
+        super().__init__(filename, poslist)
 
     def __str__(self):
-        return 'Image file "{}"'.format(self.filename)
+        return f'Image file "{self.filename}"'
 
 class LanguageFilePosition(Position):
     """
     Generic (not position-dependant) error with a language file.
     """
     def __init__(self, filename):
-        Position.__init__(self, filename, [])
+        super().__init__(filename, [])
 
     def __str__(self):
-        return 'Language file "{}"'.format(self.filename)
+        return f'Language file "{self.filename}"'
 
 class ScriptError(Exception):
     def __init__(self, value, pos = None):
@@ -206,25 +206,26 @@ class ScriptError(Exception):
         if self.pos is None:
             return self.value
         else:
-            ret = str(self.pos) + ": " + self.value
-            for inc in reversed(self.pos.includes):
-                ret += "\nIncluded from: " + str(inc)
-            return ret
+            header = f"{self.pos}: {self.value}"
+            return "\n".join([header] + [
+                f"Included from: {inc}"
+                for inc in reversed(self.pos.includes)
+            ])
 
 class ConstError(ScriptError):
     """
     Error to denote a compile-time integer constant was expected but not found.
     """
     def __init__(self, pos = None):
-        ScriptError.__init__(self, "Expected a compile-time integer constant", pos)
+        super().__init__("Expected a compile-time integer constant", pos)
 
 class RangeError(ScriptError):
     def __init__(self, value, min_value, max_value, name, pos = None):
-        ScriptError.__init__(self, name + " out of range " + str(min_value) + ".." + str(max_value) + ", encountered " + str(value), pos)
+        super().__init__(f"{name} out of range {min_value!s}..{max_value!s}, encountered {value!s}", pos)
 
 class ImageError(ScriptError):
     def __init__(self, value, filename, pos = None):
-        ScriptError.__init__(self, value, ImageFilePosition(filename, pos))
+        super().__init__(value, ImageFilePosition(filename, pos))
 
 class OnlyOnceError(ScriptError):
     """
@@ -238,7 +239,7 @@ class OnlyOnceError(ScriptError):
         @param pos: Position of the error, if provided.
         @type  pos: C{None} or L{Position}
         """
-        ScriptError.__init__(self, "A grf may contain only one {}.".format(typestr), pos)
+        super().__init__(f"A grf may contain only one {typestr}", pos)
 
 class OnlyOnce:
     """
@@ -284,7 +285,7 @@ def print_eol(msg):
     if not os.isatty(sys.stdout.fileno()):
         return
 
-    print("\r" + msg + "\033[K", end="")
+    print(f"\r{msg}\033[K", end="")
 
 """
 Current progress message.
@@ -316,7 +317,8 @@ def clear_progress():
     hide_progress()
 
     if (progress_message is not None) and (verbosity_level >= VERBOSITY_TIMING):
-        print("{} {:.1f} s".format(progress_message, time.process_time() - progress_start_time))
+        time_taken = time.process_time() - progress_start_time
+        print(f"{progress_message} {time_taken:.1f} s")
 
     progress_message = None
     progress_start_time = None
@@ -362,7 +364,7 @@ def print_info(msg):
         return
 
     hide_progress()
-    print(" nmlc info: " + msg)
+    print(f" nmlc info: {msg}")
     show_progress()
 
 def print_warning(msg, pos = None):
@@ -372,12 +374,12 @@ def print_warning(msg, pos = None):
     if verbosity_level < VERBOSITY_WARNING:
         return
     if pos:
-        msg = str(pos) + ": " + msg
+        msg = f"{pos}: {msg}"
 
-    msg = " nmlc warning: " + msg
+    msg = f" nmlc warning: {msg}"
 
     if sys.stderr.isatty():
-        msg = "\033[93m" + msg + "\033[0m"
+        msg = f"\033[93m{msg}\033[0m"
 
     hide_progress()
     print(msg, file=sys.stderr)
@@ -389,10 +391,10 @@ def print_error(msg):
     """
     clear_progress()
 
-    msg = " nmlc ERROR: " + msg
+    msg = f" nmlc ERROR: {msg}"
 
     if sys.stderr.isatty():
-        msg = "\033[91m" + msg + "\033[0m"
+        msg = f"\033[91m{msg}\033[0m"
 
     print(msg, file=sys.stderr)
 
@@ -407,7 +409,7 @@ def print_dbg(indent, *args):
     @type  args: C{Tuple} of C{str}
     """
     hide_progress()
-    print(indent * ' ' + ' '.join(str(arg) for arg in args))
+    print(f"{' ' * indent}{' '.join(map(str, args))}")
     show_progress()
 
 
@@ -459,22 +461,23 @@ def find_file(filepath):
             lcomp = comp.lower()
             matches = [entry for entry in entries if lcomp == entry.lower()]
 
+            given_path = os.path.join(path, comp)
+
             if len(matches) == 0:
-                raise ScriptError("Path \"{}\" does not exist (even after case conversions)".format(os.path.join(path, comp)))
+                raise ScriptError(f'Path "{given_path}" does not exist (even after case conversions)')
             elif len(matches) > 1:
-                raise ScriptError("Path \"{}\" is not unique (case conversion gave {:d} solutions)".format(os.path.join(path, comp), len(matches)))
+                raise ScriptError(f'Path "{given_path}" is not unique (case conversion gave {matches:d} solutions)')
 
             if matches[0] != comp:
-                given_path = os.path.join(path, comp)
                 real_path = os.path.join(path, matches[0])
-                msg = "Path \"{}\" at the file system does not match path \"{}\" given in the input (case mismatch in the last component)"
-                msg = msg.format(real_path, given_path)
+                msg = (f'Path "{real_path}" at the file system does not match path "{given_path}" '
+                        'given in the input (case mismatch in the last component)')
                 print_warning(msg)
         elif os.access(path, os.X_OK):
             # Path is only accessible, cannot inspect the file system.
             matches = [comp]
         else:
-            raise ScriptError("Path \"{}\" does not exist or is not accessible".format(path))
+            raise ScriptError(f'Path "{path}" does not exist or is not accessible')
 
         path = os.path.join(path, matches[0])
         if len(components) > 0:

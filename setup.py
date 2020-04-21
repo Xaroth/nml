@@ -31,7 +31,6 @@ setup(
                  'License :: OSI Approved :: GNU General Public License (GPL)',
                  'Operating System :: OS Independent',
                  'Programming Language :: Python :: 3',
-                 'Programming Language :: Python :: 3.5',
                  'Programming Language :: Python :: 3.6',
                  'Programming Language :: Python :: 3.7',
                  'Programming Language :: Python :: 3.8',
@@ -44,7 +43,7 @@ setup(
         'console_scripts': ['nmlc = nml.main:run']
     },
     ext_modules=[Extension("nml_lz77", ["nml/_lz77.c"], optional=True)],
-    python_requires='>=3.5',
+    python_requires='>=3.6',
     install_requires=[
         "Pillow>=3.4",
         "ply",

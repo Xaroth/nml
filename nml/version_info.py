@@ -122,15 +122,15 @@ def get_git_version(detailed = False):
             version = tag[0]
             str_tag = tag[0]
         elif branch == "master":
-            version = isodate + "-g" + changeset
+            version = f"{isodate}-g{changeset}"
         else:
-            version = isodate + "-" + branch + "-g" + changeset
+            version = f"{isodate}-{branch}-g{changeset}"
 
         if modified:
             version += "M"
 
         if detailed:
-            version = changeset + ";" + branch + ";" + str_tag + ";" + str(modified) + ";" + isodate + ";" + version
+            version = f"{changeset};{branch};{str_tag};{modified};{isodate};{version}"
 
     return version
 
@@ -167,11 +167,14 @@ def get_nml_version():
 
 def get_cli_version():
     #version string for usage in command line
-    result = get_nml_version() + "\n"
-    result += "Library versions encountered:\n"
-    for lib, lib_ver in get_lib_versions().items():
-        result += lib + ": " + lib_ver + "\n"
-    return result[0:-1] #strip trailing newline
+    header = [
+        get_nml_version(),
+        "Library versions encountered:",
+    ]
+    return "\n".join(header + [
+        f"{lib}: {lib_ver}"
+        for lib, lib_ver in sorted(get_lib_versions().items())
+    ])
 
 def get_and_write_version():
     version = get_nml_version()

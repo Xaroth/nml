@@ -160,7 +160,7 @@ def print_stats():
     if spriteset_stats[0] > 0:
         # NML uses as many concurrent spritesets as possible to prevent sprite duplication.
         # So, instead of the actual amount, we rather print the biggest unsplittable block, since that is what matters.
-        generic.print_info("Concurrent spritesets: {}/{} ({})".format(spriteset_stats[0], max_sprite_block_size, str(spriteset_stats[1])))
+        generic.print_info(f"Concurrent spritesets: {spriteset_stats[0]}/{max_sprite_block_size} ({spriteset_stats[1]})")
 
 """
 The collection which was previoulsy used. add_to_action1 will try to reuse this

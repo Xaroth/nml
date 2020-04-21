@@ -14,8 +14,8 @@ with NML; if not, write to the Free Software Foundation, Inc.,
 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA."""
 
 # -*- coding: utf-8 -*-
-import io
 from nml import generic, grfstrings, output_base
+from nml.util import StringIO
 from nml.actions import real_sprite
 
 zoom_levels = {
@@ -32,13 +32,14 @@ bit_depths = {
     32 : '32bpp',
 }
 
+
 class OutputNFO(output_base.SpriteOutputBase):
     def __init__(self, filename, start_sprite_num):
-        output_base.SpriteOutputBase.__init__(self, filename)
+        super().__init__(filename)
         self.sprite_num = start_sprite_num
 
     def open(self):
-        self.file = io.StringIO()
+        self.file = StringIO()
 
     def open_file(self):
         handle = open(self.filename, 'w', encoding='utf-8')
@@ -52,30 +53,30 @@ class OutputNFO(output_base.SpriteOutputBase):
 
     def print_byte(self, value):
         value = self.prepare_byte(value)
-        self.file.write("\\b" + str(value) + " ")
+        self.file.write(f"\\b{value} ")
 
     def print_bytex(self, value, pretty_print = None):
         value = self.prepare_byte(value)
         if pretty_print is not None:
-            self.file.write(pretty_print + " ")
+            self.file.write(f"{pretty_print} ")
             return
-        self.file.write("{:02X} ".format(value))
+        self.file.write(f"{value:02X} ")
 
     def print_word(self, value):
         value = self.prepare_word(value)
-        self.file.write("\\w{:d} ".format(value))
+        self.file.write(f"\\w{value:d} ")
 
     def print_wordx(self, value):
         value = self.prepare_word(value)
-        self.file.write("\\wx{:04X} ".format(value))
+        self.file.write(f"\\wx{value:04X} ")
 
     def print_dword(self, value):
         value = self.prepare_dword(value)
-        self.file.write("\\d{:d} ".format(value))
+        self.file.write(f"\\d{value:d} ")
 
     def print_dwordx(self, value):
         value = self.prepare_dword(value)
-        self.file.write("\\dx{:08X} ".format(value))
+        self.file.write(f"\\dx{value:08X} ")
 
     def print_string(self, value, final_zero = True, force_ascii = False):
         assert self.in_sprite
@@ -94,19 +95,27 @@ class OutputNFO(output_base.SpriteOutputBase):
             # it here by one to correct it.
             self.byte_count -= 1
 
+    def print_decimals(self, *values):
+        """
+        Identical to C{print_decimal} except it accepts multiple decimals, writing them once.
+        """
+        assert self.in_sprite
+        self.file.write(f"{' '.join(map(str, values))} ")
+
     def print_decimal(self, value):
         assert self.in_sprite
-        self.file.write(str(value) + " ")
+        self.file.write(f"{value} ")
 
     def newline(self, msg = "", prefix = "\t"):
-        if msg != "": msg = prefix + "// " + msg
-        self.file.write(msg + "\n")
+        if msg != "":
+            msg = f"{prefix}// {msg}"
+        self.file.write(f"{msg}\n")
 
     def comment(self, msg):
-        self.file.write("// " + msg + "\n")
+        self.file.write(f"// {msg}\n")
 
     def start_sprite(self, size, is_real_sprite = False):
-        output_base.SpriteOutputBase.start_sprite(self, size)
+        super().start_sprite(size)
         self.print_decimal(self.sprite_num)
         self.sprite_num += 1
         if not is_real_sprite:
@@ -122,23 +131,25 @@ class OutputNFO(output_base.SpriteOutputBase):
         for i, sprite_info in enumerate(sprite_list):
             self.file.write(sprite_info.file.value + " ")
             self.file.write(bit_depths[sprite_info.bit_depth] + " ")
-            self.print_decimal(sprite_info.xpos.value)
-            self.print_decimal(sprite_info.ypos.value)
-            self.print_decimal(sprite_info.xsize.value)
-            self.print_decimal(sprite_info.ysize.value)
-            self.print_decimal(sprite_info.xrel.value)
-            self.print_decimal(sprite_info.yrel.value)
-            self.file.write(zoom_levels[sprite_info.zoom_level] + " ")
+            self.print_decimals(
+                sprite_info.xpos.value,
+                sprite_info.ypos.value,
+                sprite_info.xsize.value,
+                sprite_info.ysize.value,
+                sprite_info.xrel.value,
+                sprite_info.yrel.value,
+            )
+            self.file.write(f"{zoom_levels[sprite_info.zoom_level]} ")
             if (sprite_info.flags.value & real_sprite.FLAG_NOCROP) != 0:
                 self.file.write("nocrop ")
             if sprite_info.mask_file is not None:
                 self.newline()
-                self.file.write("|\t")
-                self.file.write(sprite_info.mask_file.value)
-                self.file.write(" mask ")
+                self.file.write(f"|\t{sprite_info.mask_file.value} mask ")
                 mask_x, mask_y = sprite_info.mask_pos if sprite_info.mask_pos is not None else (sprite_info.xpos, sprite_info.ypos)
-                self.print_decimal(mask_x.value)
-                self.print_decimal(mask_y.value)
+                self.print_decimals(
+                    mask_x.value,
+                    mask_y.value,
+                )
             if i + 1 < len(sprite_list):
                 self.newline()
                 self.file.write("|\t")
@@ -151,5 +162,5 @@ class OutputNFO(output_base.SpriteOutputBase):
 
     def print_named_filedata(self, filename):
         self.start_sprite(0, True)
-        self.file.write("** " + filename)
+        self.file.write(f"** {filename}")
         self.end_sprite()

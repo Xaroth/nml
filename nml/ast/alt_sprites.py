@@ -64,7 +64,7 @@ class AltSpritesBlock(base_statement.BaseStatement):
     def __init__(self, param_list, sprite_list, pos):
         base_statement.BaseStatement.__init__(self, "alt_sprites-block", pos)
         if not (3 <= len(param_list) <= 5):
-            raise generic.ScriptError("alternative_sprites-block requires 3 or 4 parameters, encountered " + str(len(param_list)), pos)
+            raise generic.ScriptError(f"alternative_sprites-block requires 3 or 4 parameters, encountered {len(param_list)}", pos)
 
         self.name = param_list[0]
         if not isinstance(self.name, expression.Identifier):

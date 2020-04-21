@@ -215,7 +215,7 @@ def print_stats():
     for feature in used_ids:
         used = feature.get_num_allocated()
         if used > 0 and feature.dynamic_allocation:
-            generic.print_info("{} items: {}/{}".format(feature.name, used, feature.get_max_allocated()))
+            generic.print_info(f"{feature.name} items: {used}/{feature.get_max_allocated()}")
 
 def mark_id_used(feature, id, num_ids):
     """
@@ -256,8 +256,7 @@ def check_id_range(feature, id, num_ids, pos):
 
     # Check that IDs are valid and in range.
     if not blk_alloc.in_range(id, num_ids):
-        msg = "Item ID must be in range 0..{:d}, encountered {:d}..{:d}."
-        msg = msg.format(blk_alloc.last, id, id + num_ids - 1)
+        msg = f"Item ID must be in range 0..{blk_alloc.last:d}, encountered {id:d}..{(id + num_ids - 1):d}."
         raise generic.ScriptError(msg, pos)
 
     # ID already defined, but with the same size: OK
@@ -270,16 +269,15 @@ def check_id_range(feature, id, num_ids, pos):
 
     if blk_alloc.get_size(id) is not None:
         # ID already defined with a different size: error.
-        raise generic.ScriptError("Item with ID {:d} has already been defined, but with a different size.".format(id), pos)
+        raise generic.ScriptError(f"Item with ID {id:d} has already been defined, but with a different size.", pos)
 
     if blk_alloc.is_address_free(id):
         # First item id free -> any of the additional tile ids must be blocked.
-        msg = "This multi-tile house requires that item IDs {:d}..{:d} are free, but they are not."
-        msg = msg.format(id, id + num_ids - 1)
+        msg = f"This multi-tile house requires that item IDs {id:d}..{(id + num_ids - 1):d} are free, but they are not."
         raise generic.ScriptError(msg, pos)
 
     # ID already defined as part of a multi-tile house.
-    raise generic.ScriptError("Item ID {:d} has already used as part of a multi-tile house.".format(id), pos)
+    raise generic.ScriptError(f"Item ID {id:d} has already used as part of a multi-tile house.", pos)
 
 def get_free_id(feature, num_ids, pos):
     """
@@ -298,8 +296,7 @@ def get_free_id(feature, num_ids, pos):
 
     addr = blk_alloc.find_unused(num_ids)
     if addr is None:
-        msg = "Unable to allocate ID for item, no more free IDs available (maximum is {:d})"
-        msg = msg.format(blk_alloc.last)
+        msg = f"Unable to allocate ID for item, no more free IDs available (maximum is {blk_alloc.last:d})"
         raise generic.ScriptError(msg, pos)
 
     blk_alloc.mark_used(addr, num_ids)
@@ -430,10 +427,10 @@ def get_property_info_list(feature, name):
     #Validate feature
     assert feature in range (0, len(properties)) #guaranteed by item
     if properties[feature] is None:
-        raise generic.ScriptError("Setting properties for feature '{}' is not possible, no properties are defined.".format(general.feature_name(feature)), name.pos)
+        raise generic.ScriptError(f"Setting properties for feature '{general.feature_name(feature)}' is not possible, no properties are defined.", name.pos)
 
     if isinstance(name, expression.Identifier):
-        if not name.value in properties[feature]: raise generic.ScriptError("Unknown property name: " + name.value, name.pos)
+        if not name.value in properties[feature]: raise generic.ScriptError(f"Unknown property name: {name.value}", name.pos)
         prop_info_list = properties[feature][name.value]
         if not isinstance(prop_info_list, list): prop_info_list = [prop_info_list]
     elif isinstance(name, expression.ConstantNumeric):
@@ -444,7 +441,7 @@ def get_property_info_list(feature, name):
             if len(prop_info_list) == 1 and 'num' in prop_info_list[0] and prop_info_list[0]['num'] == name.value:
                 break
         else:
-            raise generic.ScriptError("Unknown property number: " + str(name), name.pos)
+            raise generic.ScriptError(f"Unknown property number: {name}", name.pos)
     else: assert False
 
     for prop_info in prop_info_list:
@@ -565,9 +562,9 @@ def parse_property(prop_info, value_list, feature, id):
             if 'string_literal' in prop_info and (isinstance(value, expression.StringLiteral) or prop_info['string_literal'] != 4):
                 # Parse non-string exprssions just like integers. User will have to take care of proper value.
                 # This can be used to set a label (=string of length 4) to the value of a parameter.
-                if not isinstance(value, expression.StringLiteral): raise generic.ScriptError("Value for property {:d} must be a string literal".format(prop_info['num']), value.pos)
+                if not isinstance(value, expression.StringLiteral): raise generic.ScriptError(f"Value for property {prop_info['num']:d} must be a string literal", value.pos)
                 if len(value.value) != prop_info['string_literal']:
-                    raise generic.ScriptError("Value for property {:d} must be of length {:d}".format(prop_info['num'], prop_info['string_literal']), value.pos)
+                    raise generic.ScriptError(f"Value for property {prop_info['num']:d} must be of length {prop_info['string_literal']:d}", value.pos)
 
             elif isinstance(value, expression.ConstantNumeric):
                 pass
@@ -577,7 +574,7 @@ def parse_property(prop_info, value_list, feature, id):
                 value = expression.ConstantNumeric(0)
 
             elif isinstance(value, expression.String):
-                if not 'string' in prop_info: raise generic.ScriptError("String used as value for non-string property: " + str(prop_info['num']), value.pos)
+                if not 'string' in prop_info: raise generic.ScriptError(f"String used as value for non-string property: {prop_info['num']}", value.pos)
                 string_range = prop_info['string']
                 stringid, string_actions = action4.get_string_action4s(feature, string_range, value, id)
                 value = expression.ConstantNumeric(stringid)
@@ -618,7 +615,7 @@ def validate_prop_info_list(prop_info_list, pos_list, feature):
     for info, pos in first_warnings:
         for prop_name, prop_info in properties[feature].items():
             if info == prop_info or (isinstance(prop_info, list) and info in prop_info):
-                generic.print_warning("Property '{}' should be set before all other properties and graphics.".format(prop_name), pos)
+                generic.print_warning(f"Property '{prop_name}' should be set before all other properties and graphics.", pos)
                 break
 
 
@@ -928,7 +925,7 @@ def get_disable_actions(disable):
     """
     feature = disable.feature.value
     if feature not in disable_info:
-        raise generic.ScriptError("disable_item() is not available for feature {:d}.".format(feature), disable.pos)
+        raise generic.ScriptError(f"disable_item() is not available for feature {feature:d}.", disable.pos)
     if disable.first_id is None:
         # No ids set -> disable all
         assert disable.last_id is None

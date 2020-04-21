@@ -38,7 +38,7 @@ class FontGlyphBlock(base_statement.BaseStatement, sprite_container.SpriteContai
         base_statement.BaseStatement.__init__(self, "font_glyph-block", pos)
         sprite_container.SpriteContainer.__init__(self, "font_glyph-block", name)
         if not (2 <= len(param_list) <= 3):
-            raise generic.ScriptError("font_glyph-block requires 2 or 3 parameters, encountered " + str(len(param_list)), pos)
+            raise generic.ScriptError(f"font_glyph-block requires 2 or 3 parameters, encountered {len(param_list)}", pos)
         self.font_size = param_list[0]
         self.base_char = param_list[1]
         self.image_file = param_list[2].reduce() if len(param_list) >= 3 else None
